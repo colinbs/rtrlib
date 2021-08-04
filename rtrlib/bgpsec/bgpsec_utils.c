@@ -21,6 +21,9 @@
 /** Macro to get the NLRI length in bytes. */
 #define NLRI_BYTE_LEN(data)	(((data)->nlri->nlri_len + 7) / 8)
 
+unsigned int val_count = 0;
+unsigned int sign_count = 0;
+
 struct stream {
 	uint16_t size;
 	uint8_t *stream;
@@ -356,7 +359,23 @@ int validate_signature(
 		goto err;
 	}
 
+	////////////////
+	char foobuffer[10000] = {'\0'};
+	memset(foobuffer, 0, 10000);
+	byte_sequence_to_str(foobuffer, hash, SHA256_DIGEST_LENGTH, 2);
+	BGPSEC_DBG("Hash: %s", foobuffer);
+	memset(foobuffer, 0, 10000);
+	byte_sequence_to_str(foobuffer, sig->signature, sig->sig_len, 2);
+	BGPSEC_DBG("Signature: %s", foobuffer);
+	memset(foobuffer, 0, 10000);
+	byte_sequence_to_str(foobuffer, record->spki, SPKI_SIZE, 2);
+	BGPSEC_DBG("Key: %s", foobuffer);
+	////////////////
 	/* The OpenSSL validation function to validate the signature. */
+	struct rusage before, after;
+	unsigned long cpu_time_used = 0;
+	unsigned long total = 0;
+	getrusage(RUSAGE_SELF, &before);
 	status = ECDSA_verify(
 			0,
 			hash,
@@ -364,6 +383,14 @@ int validate_signature(
 			sig->signature,
 			sig->sig_len,
 			pub_key);
+	getrusage(RUSAGE_SELF, &after);
+
+        cpu_time_used = (after.ru_utime.tv_sec - before.ru_utime.tv_sec) * CLOCKS_PER_SEC + (after.ru_utime.tv_usec - before.ru_utime.tv_usec);
+        cpu_time_used += (after.ru_stime.tv_sec - before.ru_stime.tv_sec) * CLOCKS_PER_SEC + (after.ru_stime.tv_usec - before.ru_stime.tv_usec);
+        total += cpu_time_used;
+	val_count += 1;
+
+        BGPSEC_DBG("Val result: %luus\nAvg: %luus", cpu_time_used, cpu_time_used / val_count);
 
 	switch (status) {
 	case -1:
@@ -476,8 +503,19 @@ int sign_byte_sequence(uint8_t *hash_result,
 	unsigned int sig_res = 0;
 
 	if (alg == RTR_BGPSEC_ALGORITHM_SUITE_1) {
+		struct rusage before, after;
+		unsigned long cpu_time_used = 0;
+		unsigned long total = 0;
+		getrusage(RUSAGE_SELF, &before);
 		ECDSA_sign(0, hash_result, SHA256_DIGEST_LENGTH, new_signature->signature,
 			   &sig_res, priv_key);
+		getrusage(RUSAGE_SELF, &after);
+		cpu_time_used = (after.ru_utime.tv_sec - before.ru_utime.tv_sec) * CLOCKS_PER_SEC + (after.ru_utime.tv_usec - before.ru_utime.tv_usec);
+		cpu_time_used += (after.ru_stime.tv_sec - before.ru_stime.tv_sec) * CLOCKS_PER_SEC + (after.ru_stime.tv_usec - before.ru_stime.tv_usec);
+		total += cpu_time_used;
+		sign_count += 1;
+
+		BGPSEC_DBG("Sign result: %luus\nAvg: %luus", cpu_time_used, cpu_time_used / sign_count);
 		if (sig_res < 1)
 			retval = RTR_BGPSEC_SIGNING_ERROR;
 		else
