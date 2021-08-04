@@ -360,16 +360,16 @@ int validate_signature(
 	}
 
 	////////////////
-	char foobuffer[10000] = {'\0'};
-	memset(foobuffer, 0, 10000);
-	byte_sequence_to_str(foobuffer, hash, SHA256_DIGEST_LENGTH, 2);
-	BGPSEC_DBG("Hash: %s", foobuffer);
-	memset(foobuffer, 0, 10000);
-	byte_sequence_to_str(foobuffer, sig->signature, sig->sig_len, 2);
-	BGPSEC_DBG("Signature: %s", foobuffer);
-	memset(foobuffer, 0, 10000);
-	byte_sequence_to_str(foobuffer, record->spki, SPKI_SIZE, 2);
-	BGPSEC_DBG("Key: %s", foobuffer);
+	/*char foobuffer[10000] = {'\0'};*/
+	/*memset(foobuffer, 0, 10000);*/
+	/*byte_sequence_to_str(foobuffer, hash, SHA256_DIGEST_LENGTH, 2);*/
+	/*BGPSEC_DBG("Hash: %s", foobuffer);*/
+	/*memset(foobuffer, 0, 10000);*/
+	/*byte_sequence_to_str(foobuffer, sig->signature, sig->sig_len, 2);*/
+	/*BGPSEC_DBG("Signature: %s", foobuffer);*/
+	/*memset(foobuffer, 0, 10000);*/
+	/*byte_sequence_to_str(foobuffer, record->spki, SPKI_SIZE, 2);*/
+	/*BGPSEC_DBG("Key: %s", foobuffer);*/
 	////////////////
 	/* The OpenSSL validation function to validate the signature. */
 	struct rusage before, after;
