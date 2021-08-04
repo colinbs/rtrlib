@@ -21,8 +21,10 @@
 /** Macro to get the NLRI length in bytes. */
 #define NLRI_BYTE_LEN(data)	(((data)->nlri->nlri_len + 7) / 8)
 
-unsigned int val_count = 0;
-unsigned int sign_count = 0;
+static int val_count = 0;
+static double val_total = 0;
+static int sign_count = 0;
+static double sign_total = 0;
 
 struct stream {
 	uint16_t size;
@@ -374,7 +376,6 @@ int validate_signature(
 	/* The OpenSSL validation function to validate the signature. */
 	struct rusage before, after;
 	unsigned long cpu_time_used = 0;
-	unsigned long total = 0;
 	getrusage(RUSAGE_SELF, &before);
 	status = ECDSA_verify(
 			0,
@@ -387,11 +388,11 @@ int validate_signature(
 
         cpu_time_used = (after.ru_utime.tv_sec - before.ru_utime.tv_sec) * CLOCKS_PER_SEC + (after.ru_utime.tv_usec - before.ru_utime.tv_usec);
         cpu_time_used += (after.ru_stime.tv_sec - before.ru_stime.tv_sec) * CLOCKS_PER_SEC + (after.ru_stime.tv_usec - before.ru_stime.tv_usec);
-        total += cpu_time_used;
+        val_total += cpu_time_used;
 	val_count += 1;
 
 	if (val_count == 5000) {
-		BGPSEC_DBG("Val result: %luus\nAvg: %luus", cpu_time_used, total / val_count);
+		BGPSEC_DBG("Val result: %luus\nAvg: %fus", cpu_time_used, val_total / val_count);
 	}
 
 	switch (status) {
@@ -507,18 +508,17 @@ int sign_byte_sequence(uint8_t *hash_result,
 	if (alg == RTR_BGPSEC_ALGORITHM_SUITE_1) {
 		struct rusage before, after;
 		unsigned long cpu_time_used = 0;
-		unsigned long total = 0;
 		getrusage(RUSAGE_SELF, &before);
 		ECDSA_sign(0, hash_result, SHA256_DIGEST_LENGTH, new_signature->signature,
 			   &sig_res, priv_key);
 		getrusage(RUSAGE_SELF, &after);
 		cpu_time_used = (after.ru_utime.tv_sec - before.ru_utime.tv_sec) * CLOCKS_PER_SEC + (after.ru_utime.tv_usec - before.ru_utime.tv_usec);
 		cpu_time_used += (after.ru_stime.tv_sec - before.ru_stime.tv_sec) * CLOCKS_PER_SEC + (after.ru_stime.tv_usec - before.ru_stime.tv_usec);
-		total += cpu_time_used;
+		sign_total += cpu_time_used;
 		sign_count += 1;
 
 		if (sign_count == 5000) {
-			BGPSEC_DBG("Sign result: %luus\nAvg: %luus", cpu_time_used, total / sign_count);
+			BGPSEC_DBG("Sign result: %luus\nAvg: %fus", cpu_time_used, sign_total / sign_count);
 		}
 		if (sig_res < 1)
 			retval = RTR_BGPSEC_SIGNING_ERROR;
