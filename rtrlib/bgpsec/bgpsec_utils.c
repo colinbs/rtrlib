@@ -391,7 +391,7 @@ int validate_signature(
 	val_count += 1;
 
 	if (val_count == 5000) {
-		BGPSEC_DBG("Val result: %luus\nAvg: %luus", cpu_time_used, cpu_time_used / val_count);
+		BGPSEC_DBG("Val result: %luus\nAvg: %luus", cpu_time_used, total / val_count);
 	}
 
 	switch (status) {
@@ -518,7 +518,7 @@ int sign_byte_sequence(uint8_t *hash_result,
 		sign_count += 1;
 
 		if (sign_count == 5000) {
-			BGPSEC_DBG("Sign result: %luus\nAvg: %luus", cpu_time_used, cpu_time_used / sign_count);
+			BGPSEC_DBG("Sign result: %luus\nAvg: %luus", cpu_time_used, total / sign_count);
 		}
 		if (sig_res < 1)
 			retval = RTR_BGPSEC_SIGNING_ERROR;
