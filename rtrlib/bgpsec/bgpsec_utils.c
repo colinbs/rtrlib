@@ -390,7 +390,7 @@ int validate_signature(
         total += cpu_time_used;
 	val_count += 1;
 
-	if (sign_count == 5000) {
+	if (val_count == 5000) {
 		BGPSEC_DBG("Val result: %luus\nAvg: %luus", cpu_time_used, cpu_time_used / val_count);
 	}
 
